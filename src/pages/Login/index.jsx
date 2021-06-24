@@ -3,38 +3,26 @@ import {Redirect} from 'react-router-dom'
 import {
     Form,
     Input,
-    Button,
-    message
+    Button
 } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
+import {connect} from 'react-redux'
 
 import './login.less'
 import logo from '../../assets/images/logo.png'
-import { reqLogin } from '../../api'
-import memoryUtils from '../../utils/memoryUtils'
-import storageUtils from '../../utils/storageUtils'
+import {login,showErrorMsg} from '../../redux/actions'
 
-export default class Login extends Component {
+class Login extends Component {
 
-    onFinish = async (values) => {
+    onFinish = (values) => {
         // 请求登录
         const { username, password } = values
-        const result = await reqLogin(username, password)
-        // console.log("login()",result);
-        if (result.status === 0) {
-            message.success('登录成功', 2)
-            memoryUtils.user = result.data  //保存于内存中
-            storageUtils.saveUser(result.data)//保存于local中
-
-            this.props.history.replace('/')//跳转到管理界面
-        } else {//result.status===1 
-            message.error(result.msg)//用户账号或密码错误
-        }
+        this.props.login(username,password)
     }
 
     render() {
         // 判断用户是否登录
-        const user=memoryUtils.user
+        const user=this.props.user
         if(user&&user._id){
             return <Redirect to='/'/>
         }
@@ -46,6 +34,7 @@ export default class Login extends Component {
                     <h1>react:后台管理项目</h1>
                 </header>
                 <section className="login-content">
+                <div className={user.errorMsg ? 'error-msg show' : 'error-msg'}>{user.errorMsg}</div>
                     <h2>用户登录</h2>
                     <Form onFinish={this.onFinish} className="login-form">
                         <Form.Item
@@ -87,4 +76,13 @@ export default class Login extends Component {
     }
 }
 
+export default connect(
+    state=>({
+        user:state.user
+    }),
+    {
+        login,
+        showErrorMsg
+    }
+)(Login)
 

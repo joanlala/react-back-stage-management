@@ -1,14 +1,13 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import { Modal,message } from 'antd'
+import {connect} from 'react-redux'
 
 import { formateDate } from '../../utils/dataUtils'
-import memoryUtils from '../../utils/memoryUtils'
 import { reqWeather } from '../../api'
-import menuList from '../../config/menuConfig'
-import storageUtils from '../../utils/storageUtils'
 import LinkButton from '../LinkButton'
 import './index.less'
+import {logout} from '../../redux/actions'
 
 const { confirm } = Modal
 class Header extends Component {
@@ -31,35 +30,33 @@ class Header extends Component {
         } catch (error) {
             message.error('获取天气信息失败')
         }
-
     }
 
     componentDidMount() {
         this.getTime()
         this.getWeather()
     }
-    getTitle = () => {
-        const path = this.props.location.pathname
-        let title
-        menuList.forEach(item => {
-            if (item.key === path) {
-                title = item.title
-            } else if (item.children) {
-                const cItem = item.children.find(cItem => path.indexOf(cItem.key === 0))
-                if (cItem) {
-                    title = cItem.title
-                }
-            }
-        })
-        return title
-    }
+    // getTitle = () => {
+    //     const path = this.props.location.pathname
+    //     let title
+    //     menuList.forEach(item => {
+    //         if (item.key === path) {
+    //             title = item.title
+    //         } else if (item.children) {
+    //             const cItem = item.children.find(cItem => path.indexOf(cItem.key === 0))
+    //             if (cItem) {
+    //                 title = cItem.title
+    //             }
+    //         }
+    //     })
+    //     return title
+    // }
     logOut = () => {
         confirm({
             content: '确定退出登录吗?',
             onOk: () => {
-                storageUtils.removeUser()
-                memoryUtils.user = {}
-                this.props.history.replace('/login')
+                this.props.logout()
+                //this.props.history.replace('/login')
             },
         })
     }
@@ -68,11 +65,12 @@ class Header extends Component {
     }
     render() {
         const { currentTime, weather } = this.state
-        const title = this.getTitle()
+        // const title = this.getTitle()
+        const title=this.props.headTitle
         return (
             <div className='header'>
                 <div className="header-top">
-                    <span>欢迎，{memoryUtils.user.username}</span>
+                    <span>欢迎，{this.props.user.username}</span>
                     <LinkButton onClick={this.logOut}>退出</LinkButton>
                 </div>
                 <div className="header-bottom">
@@ -90,4 +88,10 @@ class Header extends Component {
     }
 }
 
-export default withRouter(Header)
+export default connect(
+    state=>({
+        headTitle:state.headTitle,
+        user:state.user
+    }),
+    {logout}
+)(withRouter(Header))

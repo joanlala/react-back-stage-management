@@ -1,16 +1,17 @@
 import React, { PureComponent } from 'react'
 import { Card, Button, Table, Modal, message } from 'antd'
+import {connect} from 'react-redux'
+
 import { PAGE_SIZE } from "../../utils/constants"
 import { reqRoles, reqAddRole, reqUpdateRole } from '../../api'
 import AddForm from './add-form'
 import AuthForm from './auth-form'
-import memoryUtils from "../../utils/memoryUtils"
 import { formateDate } from '../../utils/dataUtils'
-import storageUtils from '../../utils/storageUtils'
+import {logout} from '../../redux/actions'
 /**
  * 角色路由
  */
-export default class Role extends PureComponent {
+class Role extends PureComponent {
     state = {
         roles: [], // 所有角色的列表 
         role: {}, // 选中的 role 
@@ -117,18 +118,19 @@ export default class Role extends PureComponent {
         const menus = this.auth.current.getMenus()
         role.menus = menus
         role.auth_time = Date.now()
-        role.auth_name = memoryUtils.user.username
+        role.auth_name = this.props.user.username
         // 请求更新
         const result = await reqUpdateRole(role)
         if (result.status === 0) {
             // 如果更新的角色_id与当前用户角色_id相同 需要强制退出 重新登录来更新left-nav
-            console.log('role._id',role._id) 
-            console.log('memoryUtils.user.role._id',memoryUtils.user.role._id) 
-            if (role._id === memoryUtils.user.role._id) {
-                storageUtils.removeUser()
-                memoryUtils.user = {}
-                this.props.history.replace('/login')
+            //console.log('role._id',role._id) 
+            //console.log('memoryUtils.user.role._id',memoryUtils.user.role._id) 
+            if (role._id === this.props.user.role._id) {
+                // storageUtils.removeUser()
+                // memoryUtils.user = {}
+                // this.props.history.replace('/login')
                 message.success('当前用户修改了权限 需要重新登录')
+                this.props.logout()
             } else {
                 message.success('设置角色权限成功')
                 this.setState({
@@ -209,3 +211,10 @@ export default class Role extends PureComponent {
         )
     }
 }
+
+export default connect(
+    state=>({
+        user:state.user
+    }),
+    {logout}
+)(Role)

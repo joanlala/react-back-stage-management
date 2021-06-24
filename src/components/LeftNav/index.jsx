@@ -1,11 +1,12 @@
 import React, { Component } from 'react'
 import { Link, withRouter } from 'react-router-dom'
 import { Menu } from 'antd'
+import {connect} from 'react-redux'
 
 import menuList from '../../config/menuConfig'
 import './index.less'
 import logo from '../../assets/images/logo.png'
-import memoryUtils from '../../utils/memoryUtils'
+import {setHeadTitle} from '../../redux/actions'
 
 const { SubMenu } = Menu;
 class LeftNav extends Component {
@@ -41,11 +42,16 @@ class LeftNav extends Component {
             // 判断当前登录用户是否拥有该left-nav项的权限
             if (this.hasAuth(item)) {
                 if (!item.children) {
+
+                    if(item.key===path||path.indexOf(item.key)===0){
+                        this.props.setHeadTitle(item.title)
+                    }
+
                     pre.push((<Menu.Item
                         key={item.key}
                         icon={item.icon}
                     >
-                        <Link to={item.key} >
+                        <Link to={item.key} onClick={()=>this.props.setHeadTitle(item.title)} >
                             {item.title}
                         </Link>
                     </Menu.Item>
@@ -73,13 +79,13 @@ class LeftNav extends Component {
     /*判断当前用户是否有看到当前 item 对应菜单项的权限 */ 
     hasAuth = (item) => { 
         const key = item.key 
-        const menuSet = memoryUtils.user.role.menus 
+        const menuSet = this.props.user.role.menus 
         /*
         1. 如果菜单项标识为公开 
         2. 如果当前用户是 admin 
         3. 如果菜单项的 key 在用户的 menus 中
         */ 
-       if(item.isPublic || memoryUtils.user.username==='admin' || menuSet.indexOf(key)!==-1) { 
+       if(item.isPublic || this.props.user.username==='admin' || menuSet.indexOf(key)!==-1) { 
            return true  
         } else if(item.children){ // 4. 如果有子节点, 需要判断有没有一个 child 的 key 在 menus 中
             return !!item.children.find(child => menuSet.indexOf(child.key)!==-1) 
@@ -113,4 +119,9 @@ class LeftNav extends Component {
     }
 }
 
-export default withRouter(LeftNav)
+export default connect(
+    state=>({
+        user:state.user
+    }),
+    {setHeadTitle}
+)(withRouter(LeftNav))
